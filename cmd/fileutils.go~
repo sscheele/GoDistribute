@@ -1,0 +1,19 @@
+package cmd
+
+import (
+	"io"
+	"os"
+)
+
+func readFileChunk(filePath string, chunkNum int, conn io.Writer) error {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	_, err = f.Seek(int64(chunkNum)*chunkSize, 0)
+	if err != nil {
+		return err
+	}
+	io.CopyN(conn, f, chunkSize)
+	return nil
+}
