@@ -53,6 +53,23 @@ func readPartFile(fPth string, chunkNum int, conn io.Writer) error {
 	return err
 }
 
+func stitchOriginal(fPth string) error {
+	out, err := os.Create(fPth)
+	if err != nil {
+		return err
+	}
+	for i := 0; ; i++ {
+		f, err := os.Open(fmt.Sprintf("%s.part%d", fPth, i))
+		if err != nil {
+			if os.IsNotExist(err) && i != 0 {
+				return nil
+			}
+			return err
+		}
+		io.Copy(out, f)
+	}
+}
+
 func recvFileChunk(fPth string, chunkNum int, conn io.Reader) error {
 	f, err := os.Create(fmt.Sprintf("%s.part%d", fPth, chunkNum))
 	if err != nil {

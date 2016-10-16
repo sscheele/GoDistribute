@@ -24,48 +24,17 @@ func server(address string) {
 	}
 }
 
+//expect the following conversation:
+//CLIENT: a number representing the chunk they want
+//SERVER: either data or closes the connection
 func handleIncoming(conn io.ReadWriteCloser) {
 	defer conn.Close()
-
-	var filenameSize int64
-	err := binary.Read(conn, binary.LittleEndian, &filenameSize)
+	buf := make([]byte, 20) //accept, at longest, a 20-digit number
+	reqLen, err := conn.Read(buf)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 
-	filename := make([]byte, int(filenameSize))
-	if _, err = io.ReadFull(conn, filename); err != nil {
-		log.Println(err)
-		return
-	}
-
-	var fileSize int64
-
-	if err = binary.Read(conn, binary.LittleEndian, &fileSize); err != nil {
-		log.Println(err)
-		return
-	}
-
-	file, err := os.Create(string(filename) + ".server")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer file.Close()
-
-	if err = file.Truncate(fileSize); err != nil {
-		log.Println(err)
-		return
-	}
-
-	br := bufio.NewReader(conn)
-	bw := bufio.NewWriter(file)
-	defer bw.Flush()
-
-	if _, err = io.CopyN(bw, br, fileSize); err != nil {
-		log.Println(err)
-	}
 }
 
 func sendFile(address string, filename string) {
