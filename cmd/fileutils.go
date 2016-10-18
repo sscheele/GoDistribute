@@ -9,26 +9,28 @@ import (
 
 //readFileChunk will read a file from the given path, treat it as though it has been broken into chunks, and read the specified chunk into an io.Writer
 //if it fails to read a chunk directly from the file, it will try to find a part file matching the chunk number and write that to the writer instead
-func chunkFile(fPth string) error {
+//it returns the number of chunks it created and an error
+func chunkFile(fPth string) (int, error) {
 	f, err := os.Open(fPth)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	defer f.Close()
 	fInfo, err := f.Stat()
 	if err != nil {
-		return err
+		return -1, err
 	}
 	fSize := fInfo.Size()
-	for chunkNum := 0; chunkNum < int(math.Ceil(float64(fSize)/float64(chunkSize))); chunkNum++ {
+	chunkNum := 0
+	for ; chunkNum < int(math.Ceil(float64(fSize)/float64(chunkSize))); chunkNum++ {
 		out, err := os.Create(fmt.Sprintf("%s.part%d", fPth, chunkNum))
 		if err != nil {
-			return err
+			return -1, err
 		}
 		//File.Seek sets the offset from which to read
 		_, err = f.Seek(int64(chunkNum)*chunkSize, 0)
 		if err != nil {
-			return err
+			return -1, err
 		}
 		//get file size to see if we need to read less than 1 chunk
 		if int64(chunkNum+1) > fSize/chunkSize {
@@ -38,7 +40,7 @@ func chunkFile(fPth string) error {
 		}
 		out.Close()
 	}
-	return err
+	return chunkNum, err
 }
 
 //readPartFile tries to read a file of the name "[path]/[name].[ext].partN" into an io.Writer
