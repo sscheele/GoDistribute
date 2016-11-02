@@ -1,5 +1,7 @@
 package main
 
+//PRE: Clients are assumed to have the following information:
+//	The IP address of the server
 import (
 	"fmt"
 	"io"
